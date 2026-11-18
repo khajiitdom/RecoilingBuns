@@ -1495,22 +1495,38 @@ namespace BR
         static const std::array<RE::BSFixedString, 5> brL{ "L Breast03", "L Breast02", "L Breast01", "NPC L Breast01", "NPC L Breast" },
             brR{ "R Breast03", "R Breast02", "R Breast01", "NPC R Breast01", "NPC R Breast" };
         int iThL = -1, iThR = -1, iBelly = -1, iBrL = -1, iBrR = -1, rankL = 99, rankR = 99;
+        // skin->bones holds plain, non-owning pointers. While her skeleton is rebuilt (a loading screen, an SMP armor
+        // reattach) an entry can point at a node that is already freed, and reading its name crashes the game. So the
+        // bones are looked up by name in her live skeleton instead, and the skin's entries are only compared with them
+        // by address - a skin entry is never dereferenced here. A mesh still bound to bones that are not in her
+        // current skeleton does not match and is skipped; the next scan picks it up once it is bound again.
+        const auto bone = [&](const RE::BSFixedString& a_name) -> const RE::NiAVObject* {
+            return a_t.root ? a_t.root->GetObjectByName(a_name) : nullptr;
+        };
+        const RE::NiAVObject *nL = bone(lButt), *nR = bone(rButt), *nP = bone(pelvis);
+        const RE::NiAVObject *nThL = bone(thL), *nThR = bone(thR), *nBelly = bone(belly);
+        if (!nL || !nR || !nP) return nullptr;
+        std::array<const RE::NiAVObject*, 5> nBrL{}, nBrR{};
+        for (std::size_t k = 0; k < nBrL.size(); ++k) {
+            nBrL[k] = bone(brL[k]);
+            nBrR[k] = bone(brR[k]);
+        }
         for (std::uint32_t i = 0; i < nb; ++i) {
-            auto* bn = skin->bones[i];
+            const RE::NiAVObject* bn = skin->bones[i];
             if (!bn) continue;
-            if (bn->name == lButt) iL = static_cast<int>(i);
-            else if (bn->name == rButt) iR = static_cast<int>(i);
-            else if (bn->name == pelvis) iP = static_cast<int>(i);
-            else if (bn->name == thL) iThL = static_cast<int>(i);
-            else if (bn->name == thR) iThR = static_cast<int>(i);
-            else if (bn->name == belly) iBelly = static_cast<int>(i);
+            if (bn == nL) iL = static_cast<int>(i);
+            else if (bn == nR) iR = static_cast<int>(i);
+            else if (bn == nP) iP = static_cast<int>(i);
+            else if (bn == nThL) iThL = static_cast<int>(i);
+            else if (bn == nThR) iThR = static_cast<int>(i);
+            else if (bn == nBelly) iBelly = static_cast<int>(i);
             else
-                for (int k = 0; k < static_cast<int>(brL.size()); ++k) {
-                    if (bn->name == brL[k] && k < rankL) {
+                for (int k = 0; k < static_cast<int>(nBrL.size()); ++k) {
+                    if (bn == nBrL[k] && k < rankL) {
                         iBrL = static_cast<int>(i);
                         rankL = k;
                     }
-                    if (bn->name == brR[k] && k < rankR) {
+                    if (bn == nBrR[k] && k < rankR) {
                         iBrR = static_cast<int>(i);
                         rankR = k;
                     }
