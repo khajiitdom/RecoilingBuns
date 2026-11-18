@@ -1,0 +1,155 @@
+name: Build RecoilingBuns (DLL + PDB)
+
+# Builds the plugin the way BUILD.txt describes: CommonLibSSE-NG at the pinned commit as a static library with the
+# static runtime (/MT), vcpkg static libraries (x64-windows-static), OStimNG's PluginInterface headers, then the plugin.
+# Cold run is long (CommonLibSSE-NG compiles for SE + AE + VR); the vcpkg and CommonLib builds are cached.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+env:
+  COMMONLIB_COMMIT: 0e167dd4c3981d586a53953e2c1a608e2c4ccedf
+  OSTIM_TAG: 7.5c
+  TRIPLET: x64-windows-static
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Disable CRLF conversion
+        shell: bash
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+
+      - name: MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # --- vcpkg, pinned to the baseline CommonLibSSE-NG itself uses -------------------------------------------------
+      - name: Fetch CommonLibSSE-NG (pinned commit, with the openvr submodule)
+        shell: bash
+        run: |
+          mkdir commonlib && cd commonlib
+          git init -q .
+          git remote add origin https://github.com/alandtse/CommonLibSSE-NG.git
+          git fetch --depth 1 origin "$COMMONLIB_COMMIT"
+          git checkout -q FETCH_HEAD
+          git submodule update --init --depth 1 extern/openvr
+          ls extern/openvr/lib/win64/openvr_api.lib extern/openvr/headers/openvr.h
+
+      - name: Read vcpkg baseline
+        id: baseline
+        shell: pwsh
+        run: |
+          $b = (Get-Content commonlib/vcpkg.json | ConvertFrom-Json).'builtin-baseline'
+          "sha=$b" >> $env:GITHUB_OUTPUT
+
+      - name: Cache vcpkg packages and CommonLib build
+        uses: actions/cache@v4
+        with:
+          path: |
+            vcpkg_installed
+            commonlib-build
+          key: br-toolchain-${{ steps.baseline.outputs.sha }}-${{ env.COMMONLIB_COMMIT }}-${{ env.TRIPLET }}-v1
+
+      - name: Install vcpkg dependencies (static libs, static runtime)
+        shell: pwsh
+        run: |
+          # always present: CommonLibSSE-NG's configure uses its toolchain file
+          git clone https://github.com/microsoft/vcpkg.git vcpkg
+          git -C vcpkg checkout ${{ steps.baseline.outputs.sha }}
+          if (Test-Path vcpkg_installed/$env:TRIPLET/lib/fmt.lib) { Write-Host "vcpkg packages restored from cache"; exit 0 }
+          ./vcpkg/bootstrap-vcpkg.bat -disableMetrics
+          # the dependencies of CommonLibSSE-NG's vcpkg.json (without its optional "tests" feature) plus what the plugin links
+          $manifest = @{
+            name = "br-deps"; version = "0.0.0"; 'builtin-baseline' = "${{ steps.baseline.outputs.sha }}"
+            dependencies = @("directxmath","directxtk","fmt","nlohmann-json","rapidcsv","simpleini","spdlog","toml11","xbyak")
+          } | ConvertTo-Json -Depth 4
+          New-Item -ItemType Directory -Force -Path vcpkg-manifest | Out-Null
+          Set-Content -Path vcpkg-manifest/vcpkg.json -Value $manifest
+          ./vcpkg/vcpkg.exe install --triplet $env:TRIPLET --x-manifest-root=vcpkg-manifest --x-install-root=vcpkg_installed
+          if (-not (Test-Path vcpkg_installed/$env:TRIPLET/lib/fmt.lib)) { Write-Error "fmt.lib missing"; exit 1 }
+
+      # --- CommonLibSSE-NG as a static library with /MT --------------------------------------------------------------
+      - name: Build CommonLibSSE-NG (SE + AE + VR, static runtime)
+        shell: pwsh
+        run: |
+          if (Test-Path commonlib-build/CommonLibSSE.lib) { Write-Host "CommonLibSSE.lib restored from cache"; exit 0 }
+          $flags = "-DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE /permissive- /Zc:preprocessor /EHsc /W4 /external:anglebrackets /external:W0 /bigobj"
+          cmake -S commonlib -B commonlib-build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_CXX_FLAGS="$flags" `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
+            -DBUILD_TESTS=OFF `
+            -DENABLE_SKYRIM_SE=ON -DENABLE_SKYRIM_AE=ON -DENABLE_SKYRIM_VR=ON `
+            -DCMAKE_PREFIX_PATH="$env:GITHUB_WORKSPACE/vcpkg_installed/$env:TRIPLET" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_MANIFEST_MODE=OFF `
+            -DVCPKG_INSTALLED_DIR="$env:GITHUB_WORKSPACE/vcpkg_installed" `
+            -DVCPKG_TARGET_TRIPLET=$env:TRIPLET
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          cmake --build commonlib-build
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path commonlib-build/CommonLibSSE.lib)) { Write-Error "CommonLibSSE.lib not produced"; exit 1 }
+
+      - name: Assemble BR_TOOLCHAIN (layout from BUILD.txt)
+        shell: pwsh
+        run: |
+          $tc = "$env:GITHUB_WORKSPACE/toolchain"
+          $v  = "$env:GITHUB_WORKSPACE/vcpkg_installed/$env:TRIPLET"
+          New-Item -ItemType Directory -Force -Path "$tc/commonlib/lib","$tc/vcpkg/lib","$tc/openvr/lib/win64" | Out-Null
+          Copy-Item -Recurse commonlib/include "$tc/commonlib/include"
+          Copy-Item commonlib-build/CommonLibSSE.lib "$tc/commonlib/lib/"
+          Copy-Item -Recurse "$v/include" "$tc/vcpkg/include"
+          foreach ($l in "fmt","spdlog","DirectXTK") {
+            $f = Get-ChildItem "$v/lib" -Filter "$l*.lib" | Where-Object { $_.Name -notmatch 'd\.lib$' } | Select-Object -First 1
+            if (-not $f) { Write-Error "$l lib not found in $v/lib"; exit 1 }
+            Copy-Item $f.FullName "$tc/vcpkg/lib/$l.lib"
+          }
+          Copy-Item -Recurse commonlib/extern/openvr/headers "$tc/openvr/headers"
+          Copy-Item commonlib/extern/openvr/lib/win64/openvr_api.lib "$tc/openvr/lib/win64/"
+          # the plugin includes "directxtk/..." and expects DirectXTK headers there
+          if (-not (Test-Path "$tc/vcpkg/include/directxtk")) { Write-Warning "include/directxtk missing; the plugin build will tell" }
+          Get-ChildItem -Recurse "$tc/commonlib/lib","$tc/vcpkg/lib","$tc/openvr/lib" | Select-Object FullName,Length
+
+      - name: Fetch OStimNG PluginInterface headers
+        shell: bash
+        run: |
+          git clone --depth 1 --branch "$OSTIM_TAG" --filter=blob:none --sparse https://github.com/VersuchDrei/OStimNG.git ostim
+          git -C ostim sparse-checkout set skse/src/PluginInterface
+          ls ostim/skse/src/PluginInterface
+
+      # --- the plugin ------------------------------------------------------------------------------------------------
+      - name: Configure plugin
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release `
+            -DBR_TOOLCHAIN="$env:GITHUB_WORKSPACE/toolchain" `
+            -DBR_OSTIM_API="$env:GITHUB_WORKSPACE/ostim/skse/src"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Build plugin
+        shell: pwsh
+        run: |
+          cmake --build build
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Collect DLL + PDB
+        shell: pwsh
+        run: |
+          $dist = "dist/SKSE/Plugins"
+          New-Item -ItemType Directory -Force -Path $dist | Out-Null
+          Copy-Item build/RecoilingBuns.dll,build/RecoilingBuns.pdb $dist
+          Copy-Item RecoilingBuns.ini "$dist/RecoilingBuns.ini.sample"
+          Get-ChildItem $dist | Select-Object Name,Length
+
+      - name: Upload result (DLL + PDB together)
+        uses: actions/upload-artifact@v4
+        with:
+          name: RecoilingBuns-with-pdb
+          path: dist/
+          if-no-files-found: error
