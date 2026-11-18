@@ -1,0 +1,41 @@
+Recoiling Buns - source
+=======================
+
+An SKSE plugin (C++23, CommonLibSSE-NG). src\main.cpp wires the pieces into the game; the headers hold the rest, free
+of game types (they also run outside the game): Rules.h (the OStim scene file reader and the speed / stage rules),
+Impacts.h (his thrusts, from the distance between his genital base and her buttocks, and which thrusts and impact
+sounds start a ripple), SexLab.h (which steps of a SexLab scene mean what, and when a SexLab P+ scene's stage is asked
+for), Ripple.h (the wave field and the shading colour), Layout.h (the vertex layout of the colour layer added while a
+ripple runs), PCH.h (the precompiled header with the game's includes).
+
+BUILD
+  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBR_TOOLCHAIN=<folder> -DBR_OSTIM_API=<folder>
+  cmake --build build
+  BR_TOOLCHAIN: a prebuilt CommonLibSSE-NG built with the same MSVC toolset (commonlib\include, commonlib\lib\
+  CommonLibSSE.lib, vcpkg\include + vcpkg\lib with fmt, spdlog, DirectXTK and the DirectXMath headers, openvr\headers
+  + openvr\lib\win64).
+  The release was built with CommonLibSSE-NG 6.4.0 (https://github.com/alandtse/CommonLibSSE-NG, branch "ng", commit
+  0e167dd4c3981d586a53953e2c1a608e2c4ccedf, SE / AE / VR multi-target, static library; it compiles in rapidcsv 8.90,
+  header-only, and hde64 from minhook v1.3.4 src/hde, which its CMake build fetches), {fmt} 12.1.0, spdlog 1.16.0 and
+  DirectXTK as static libraries, the DirectXMath 3.20 headers (the vcpkg "directxmath" port, found before the Windows
+  SDK's own copy), MSVC 14.51 x64, static runtime (/MT).
+  BR_OSTIM_API: the folder that contains OStim Standalone's "PluginInterface" folder - the sources include
+  "PluginInterface/Threading/ThreadInterface.h" and the like (OStim NG 7.5c: skse\src\PluginInterface of
+  https://github.com/VersuchDrei/OStimNG at tag 7.5c, commit dc2a531dfff3b422b29be771d9f010002df71252).
+  SexLab needs nothing at build time: its scene events and its scene threads' script variables and functions are read
+  by name while the game runs.
+  Optional names: -DBR_NAME (DLL / ini / log name, default RecoilingBuns), -DBR_TITLE, -DBR_AUTHOR.
+  The released DLL is this build with one change made after linking: the absolute source file paths the compiler
+  bakes into it (CommonLibSSE-NG's log calls and error reports record their source file) were overwritten in place
+  by their project-relative tails - e.g. "src\main.cpp", "commonlib\include\REL/Module.h",
+  "CommonLibSSE-NG\src\SKSE\API.cpp" (its folder name without its "-<commit>" suffix) - and the rest of each string
+  zeroed, so no address in the DLL moved.
+  Built in folders whose paths have the same lengths, a build of your own then differs from it only in those strings,
+  its time stamps and its debug-file id; with other paths the strings have other lengths, so the data after them, and
+  the code that addresses it, moves too.
+
+THE SETTINGS FILE
+  The download carries no settings file: on the game's first start the plugin writes SKSE\Plugins\RecoilingBuns.ini
+  with the defaults - RecoilingBuns.ini here, after its first line (src\DefaultIni.h holds that text) - and no update
+  replaces it. Every setting is explained in it. The plugin reads it when the game starts and again whenever the file
+  changes while the game runs.

@@ -1,0 +1,181 @@
+Recoiling Buns - third-party components
+=======================================
+
+RecoilingBuns.dll is built with these libraries (statically linked into the DLL):
+
+CommonLibSSE-NG 6.4.0
+  Source: https://github.com/alandtse/CommonLibSSE-NG (formerly alandtse/CommonLibVR), branch "ng",
+          commit 0e167dd4c3981d586a53953e2c1a608e2c4ccedf
+  License: GPL-3.0-or-later with the Modding Exception and the GPL-3.0 Linking Exception (with Corresponding Source),
+           as stated in README.md of that repository (the GPL text in COPYING, the exceptions in EXCEPTIONS.md).
+           The GPL text is LICENSE.txt.
+  Built as a static library (SE / AE / VR multi-target) with MSVC 14.51 (x64).
+  It compiles in the code below (Hacker Disassembler Engine 64, rapidcsv) and keeps the original CommonLibSSE notice:
+
+  Portions originally released under the MIT License:
+
+    MIT License
+
+    Copyright (c) 2018 Ryan-rsm-McKenzie
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+Hacker Disassembler Engine 64 (hde64), compiled into CommonLibSSE-NG
+  Source: https://github.com/TsudaKageyu/minhook, tag v1.3.4, folder src/hde (fetched by CommonLibSSE-NG's build)
+
+    Hacker Disassembler Engine 64 C
+    Copyright (c) 2008-2009, Vyacheslav Patkov.
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+
+     1. Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+     2. Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+    TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+    PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR
+    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+rapidcsv 8.90, used by CommonLibSSE-NG
+  Source: https://github.com/d99kris/rapidcsv
+
+    BSD 3-Clause License
+
+    Copyright (c) 2017, Kristofer Berggren
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice, this
+      list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+    * Neither the name of the copyright holder nor the names of its
+      contributors may be used to endorse or promote products derived from
+      this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+{fmt} 12.1.0
+  Source: https://github.com/fmtlib/fmt
+  License: MIT (the text below), with this optional exception:
+    --- Optional exception to the license ---
+    As an exception, if, as a result of your compiling your source code, portions of this Software are embedded into a
+    machine-executable object form of such source code, you may redistribute such embedded portions in such object form
+    without including the above copyright and permission notices.
+  Copyright (c) 2012 - present, Victor Zverovich and {fmt} contributors
+
+spdlog 1.16.0
+  Source: https://github.com/gabime/spdlog
+  License: MIT (the text below)
+  Copyright (c) 2016 Gabi Melman.
+
+DirectXTK
+  Source: https://github.com/microsoft/DirectXTK
+  License: MIT (the text below)
+  Copyright (c) Microsoft Corporation.
+
+DirectXMath 3.20 - its half-precision conversions (DirectXPackedVector.h, header-only; the vcpkg "directxmath" port)
+  Source: https://github.com/microsoft/DirectXMath
+  License: MIT (the text below)
+  Copyright (c) Microsoft Corporation.
+
+SKSE Menu Framework's API declarations (src\SMF.h: the settings tab's calls into SKSEMenuFramework.dll, resolved at run
+time - nothing of the framework is linked in or shipped)
+  Source: https://github.com/Thiago099/SKSE-Menu-Framework-3-Example (include/SKSEMenuFramework.h, commit f21b8e034c)
+  License: MIT (the text below)
+  Copyright (c) 2024 Thiago Kaique
+
+The MIT License (for {fmt}, spdlog, DirectXTK, DirectXMath and the SKSE Menu Framework declarations):
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+  persons to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+  Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+OpenVR (its headers, compiled in through CommonLibSSE-NG's VR target - no OpenVR library code is linked into the DLL)
+  Source: https://github.com/ValveSoftware/openvr
+  License: BSD 3-Clause
+
+    Copyright (c) 2015, Valve Corporation
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation and/or
+    other materials provided with the distribution.
+
+    3. Neither the name of the copyright holder nor the names of its contributors
+    may be used to endorse or promote products derived from this software without
+    specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Built against, not included in the download:
+  OStim NG 7.5c - its "PluginInterface" headers (interface declarations the DLL calls through):
+    skse\src\PluginInterface at tag 7.5c, commit dc2a531dfff3b422b29be771d9f010002df71252
+    Source: https://github.com/VersuchDrei/OStimNG     License: GPL-3.0
